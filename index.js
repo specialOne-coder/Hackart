@@ -227,8 +227,8 @@ async function getUserAllNFTs(address) {
     })
         .then((response) => {
             // console.log("Get nft respons => ", response.data);
-            let userNfts = filterForHaveNft(response.data);
-            console.log('Final nfts =>', userNfts);
+            finalResponse = filterForHaveNft(response.data);
+            console.log('Final nfts =>', finalResponse);
         }).catch(function (error) {
             console.log("Connect error : ", error);
         });
