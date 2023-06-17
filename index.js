@@ -38,9 +38,8 @@ app.post('/mint', async (req, res) => {
     const params = req.body;
     console.log("Params =>", params);
     try {
-        const data = await mintNFT(params);
-        // res.send({ status: 200, response: data });
-
+        await mintNFT(params);
+        res.status(200).json({ success: true });
     } catch (error) {
         console.log("Error mint=>", error);
     }
@@ -48,14 +47,20 @@ app.post('/mint', async (req, res) => {
 
 app.post('/changeMetadata', async (req, res) => {
     const params = req.body;
-    const data = await changeNftMetadata(params);
-    res.send({ status: 200, response: data });
+    await changeNftMetadata(params);
+    res.status(200).json({ success: true });
 });
 
-app.get('/userNft/:address', async (req, res) => {
+app.get('/userNfts/:address', async (req, res) => {
     const data = await getUserNFTs(req.params['address']);
     res.send(JSON.stringify(data));
 });
+
+app.get('/nftOwner/:tokenId', async (req, res) => {
+    const data = await getTokenOwner(req.params['tokenId']);
+    res.send(JSON.stringify(data));
+});
+
 
 app.get('/userAllNts/:address', async (req, res) => {
     const data = await getUserAllNFTs(req.params['address']);
@@ -77,6 +82,8 @@ app.listen(port, () => {
 });
 
 
+
+// Functions //
 async function fetchData() {
     const data = {};
 
@@ -135,10 +142,10 @@ async function fetchDataSpecificDay(day) {
 
 async function mintNFT(params) {
     const contract = await toolkit.contract.at(process.env.NFT_CONTRACT_ADDRESS)
-    let metadata = await buildMetadata(params.attributes);
-    console.log('Build metadata => ', metadata);
+    console.log('Attributes =>', params.attributes);
+    let finalAttr = JSON.stringify(params.attributes);
+    let metadata =  buildMetadata(finalAttr);
     const tx = contract.methods["mint"](params.userAddress, metadata)
-    console.log('tx =>', tx);
     try {
         const op = await tx.send()
         if (op.results) {
@@ -149,24 +156,27 @@ async function mintNFT(params) {
     }
 }
 
-async function buildMetadata(attributes) {
-    // let metadata = [
-    //     "name", Buffer.from('Forget Me').toString('hex'),
-    //     // ["description", new Bytes(Buffer.from('Tezos ubisoft nft').toString('hex'))._content],
-    //     // ["decimals", new Bytes(Buffer.from('0').toString('hex'))._content],
-    //     // ["attributes",  new Bytes(Buffer.from(`${attributes}`).toString('hex'))._content]
-    // ]
-
+function buildMetadata(attributes) {
     let metadata = MichelsonMap.fromLiteral({
-        name: Buffer("tezos-stora", "ascii").toString("hex"),
-        description: Buffer("tezos-stora", "ascii").toString("hex"),
+        name: Buffer("Forget Me", "ascii").toString("hex"),
+        description: Buffer("Tezos ubisoft hackaton", "ascii").toString("hex"),
+        tags: Buffer(``, "ascii").toString("hex"),
+        symbol: Buffer("FNM", "ascii").toString("hex"),
+        decimals: Buffer("0", "ascii").toString("hex"),
+        attributes: Buffer(`${attributes}`, "ascii").toString("hex"),
+        displayUri: Buffer("https://cdn.avatarz.com/vhive/wearables/8/4a1e2a03-e3e4-4090-80b3-05ef44c45dbe/display.png", "ascii").toString("hex"),
+        artifactUri: Buffer("https://cdn.avatarz.com/vhive/wearables/8/4a1e2a03-e3e4-4090-80b3-05ef44c45dbe/artefact.png", "ascii").toString("hex"),
+        description: Buffer("The digital version of our merchandising piece: Cargo Watch Us.", "ascii").toString("hex"),
+        thumbnailUri: Buffer("https://cdn.avatarz.com/vhive/wearables/8/4a1e2a03-e3e4-4090-80b3-05ef44c45dbe/thumbnail.png", "ascii").toString("hex"),
     });
     return metadata;
 }
 
 async function changeNftMetadata(params) {
     const contract = await toolkit.contract.at(process.env.NFT_CONTRACT_ADDRESS)
-    const tx = contract.methods["set_token_metadata"](params.tid, params.tdata)
+    let finalAttr = JSON.stringify(params.attributes);
+    let metadata = buildMetadata(finalAttr);
+    const tx = contract.methods["set_token_metadata"](params.tid, metadata)
     try {
         const op = await tx.send()
         if (op.results) {
@@ -175,6 +185,33 @@ async function changeNftMetadata(params) {
     } catch (e) {
         console.log("Mint error =>", e);
     }
+}
+
+function searchOwner(nfts, tokenId) {
+    for (let index in nfts) {
+        if (nfts[index].token.tokenId == tokenId) {
+            return nfts[index].account.address;
+        }
+    }
+    return {"error": "not found"};
+}
+
+async function getTokenOwner(tokenId){
+    let finalResponse = [];
+    await axios({
+        method: 'get',
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+        },
+        url: `${process.env.TZKT_API_URL}tokens/balances?token.contract=${process.env.NFT_CONTRACT_ADDRESS}`,
+    })
+        .then((response) => {
+            finalResponse = searchOwner(response.data, tokenId);
+        }).catch(function (error) {
+            console.log("Connect error : ", error);
+        });
+    return finalResponse;
 }
 
 async function getUserNFTs(address) {
@@ -191,7 +228,7 @@ async function getUserNFTs(address) {
         url: `${process.env.TZKT_API_URL}tokens/balances?account=${address}&token.contract=${process.env.NFT_CONTRACT_ADDRESS}`,
     })
         .then((response) => {
-            console.log("Get nft respons => ", response);
+            finalResponse = filterForHaveNft(response.data);
         }).catch(function (error) {
             console.log("Connect error : ", error);
         });
@@ -223,7 +260,7 @@ async function getUserAllNFTs(address) {
         params: {
             'address': address
         },
-        url: `${process.env.TZKT_API_URL}tokens/balances?account=${address}`,
+        url: `${process.env.TZKT_API_URL_MAINNET}tokens/balances?account=${address}`,
     })
         .then((response) => {
             // console.log("Get nft respons => ", response.data);
