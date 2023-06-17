@@ -81,8 +81,6 @@ app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });
 
-
-
 // Functions //
 async function fetchData() {
     const data = {};
@@ -158,16 +156,16 @@ async function mintNFT(params) {
 
 function buildMetadata(attributes) {
     let metadata = MichelsonMap.fromLiteral({
-        name: Buffer("Forget Me", "ascii").toString("hex"),
-        description: Buffer("Tezos ubisoft hackaton", "ascii").toString("hex"),
+        name: Buffer("Forget Me Not", "ascii").toString("hex"),
+        description: Buffer("Tezos ubisoft hackaton, Martina Team", "ascii").toString("hex"),
         tags: Buffer(``, "ascii").toString("hex"),
         symbol: Buffer("FNM", "ascii").toString("hex"),
         decimals: Buffer("0", "ascii").toString("hex"),
         attributes: Buffer(`${attributes}`, "ascii").toString("hex"),
-        displayUri: Buffer("https://cdn.avatarz.com/vhive/wearables/8/4a1e2a03-e3e4-4090-80b3-05ef44c45dbe/display.png", "ascii").toString("hex"),
-        artifactUri: Buffer("https://cdn.avatarz.com/vhive/wearables/8/4a1e2a03-e3e4-4090-80b3-05ef44c45dbe/artefact.png", "ascii").toString("hex"),
+        displayUri: Buffer("https://cdn.discordapp.com/attachments/1110231393507758121/1119689190116970577/ForgetMeNot_Thumb_01_NoBG.png", "ascii").toString("hex"),
+        artifactUri: Buffer("https://cdn.discordapp.com/attachments/1110231393507758121/1119689190116970577/ForgetMeNot_Thumb_01_NoBG.png", "ascii").toString("hex"),
         description: Buffer("The digital version of our merchandising piece: Cargo Watch Us.", "ascii").toString("hex"),
-        thumbnailUri: Buffer("https://cdn.avatarz.com/vhive/wearables/8/4a1e2a03-e3e4-4090-80b3-05ef44c45dbe/thumbnail.png", "ascii").toString("hex"),
+        thumbnailUri: Buffer("https://cdn.discordapp.com/attachments/1110231393507758121/1119689190116970577/ForgetMeNot_Thumb_01_NoBG.png", "ascii").toString("hex"),
     });
     return metadata;
 }
