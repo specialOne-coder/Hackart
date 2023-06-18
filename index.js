@@ -24,6 +24,13 @@ if ((apiKey === undefined) || (apiKey === null)) {
     throw ('API_KEY env var must be set');
 }
 
+app.use('/view', (req, res, next) => {
+    if (req.path.includes('.gz')) {
+        res.set('Content-Encoding', 'gzip');
+    }
+    next();
+}, express.static('static'));
+
 app.get('/feelings', async (req, res) => {
     const data = await fetchData();
     res.send(JSON.stringify(data));
@@ -60,7 +67,6 @@ app.get('/nftOwner/:tokenId', async (req, res) => {
     const data = await getTokenOwner(req.params['tokenId']);
     res.send(JSON.stringify(data));
 });
-
 
 app.get('/userAllNts/:address', async (req, res) => {
     const data = await getUserAllNFTs(req.params['address']);
@@ -140,8 +146,9 @@ async function fetchDataSpecificDay(day) {
 
 async function mintNFT(params) {
     const contract = await toolkit.contract.at(process.env.NFT_CONTRACT_ADDRESS)
-    console.log('Attributes =>', params.attributes);
-    let finalAttr = JSON.stringify(params.attributes);
+    let attributesFromApi = await fetchData();
+    console.log('Attributes =>', attributesFromApi);
+    let finalAttr = JSON.stringify(attributesFromApi);
     let metadata =  buildMetadata(finalAttr);
     const tx = contract.methods["mint"](params.userAddress, metadata)
     try {
@@ -159,7 +166,7 @@ function buildMetadata(attributes) {
         name: Buffer("Forget Me Not", "ascii").toString("hex"),
         description: Buffer("Tezos ubisoft hackaton, Martina Team", "ascii").toString("hex"),
         tags: Buffer(``, "ascii").toString("hex"),
-        symbol: Buffer("FNM", "ascii").toString("hex"),
+        symbol: Buffer("FMN", "ascii").toString("hex"),
         decimals: Buffer("0", "ascii").toString("hex"),
         attributes: Buffer(`${attributes}`, "ascii").toString("hex"),
         displayUri: Buffer("https://cdn.discordapp.com/attachments/1110231393507758121/1119689190116970577/ForgetMeNot_Thumb_01_NoBG.png", "ascii").toString("hex"),
