@@ -111,6 +111,7 @@ async function fetchData() {
 
         data['sleepScore'] = sleep['score'];
         data['temperatureDelta'] = Math.round(sleep['temperature_delta'] * 100);
+        data ['Last visit'] = new Date().toLocaleString();
     } catch (e) {
         console.error("failed to get sleep data from ouraring", e);
     }
